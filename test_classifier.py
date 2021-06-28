@@ -43,9 +43,9 @@ def main():
 	dataset, labels = read_dataset("dataset.ds5")
 	instance_num = dataset.shape[0]
 	
-	n_hidden = 100
+	n_hidden = 500
 	out_neurons = 1
-	batch_size = 32768
+	batch_size = 1024
 	
 	model = Sequential()
 	model.add(Dense(n_hidden))
