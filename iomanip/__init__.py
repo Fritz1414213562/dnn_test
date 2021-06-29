@@ -5,3 +5,4 @@ from .write_fastl import dump_fastl
 from .read_files_in_dir import *
 from .read_aligned_id import read_id_from_paf
 from .read_fastl import read_fastl
+from .read_dataset import read_dataset
