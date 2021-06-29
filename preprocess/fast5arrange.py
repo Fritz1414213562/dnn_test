@@ -40,10 +40,9 @@ def arrange_fast5(fastl_name, fast5_dirs, sqgl_unit_size, sqgl_incr_size, data_n
 			start_idx = sqgl_incr_size * (i_incr + 1)
 			end_idx = squiggle_length
 			out_sqgls.append(np.pad(squiggles[key][start_idx:end_idx], [0, int(start_idx + sqgl_unit_size - squiggle_length)], 'constant'))
-			out_labels.append(labels[key])
-	
-	out_sqgls = np.array(out_sqgls)
-	out_labels = np.array(out_labels)
+			out_labels.append(labels[key])	
+	out_sqgls = np.array(out_sqgls, dtype = np.float16)
+	out_labels = np.array(out_labels, dtype = np.float16)
 	
 	return out_sqgls, out_labels
 
@@ -76,7 +75,6 @@ def main(fastl_name, fast5_dirs, output, data_num):
 		for i_instance in range(len(squiggles)):
 			subgrp = grp2.create_group("Instance" + str(i_instance))
 			subgrp.create_dataset("squiggle", data = squiggles[i_instance])
-			print(np.array(labels[i_instance]))
 			subgrp.create_dataset("label", data = np.array([labels[i_instance]]))
 
 
