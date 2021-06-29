@@ -5,32 +5,13 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Dense, Activation, Masking
 from tensorflow.keras.layers import LSTM
+from iomanip import read_dataset
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import math
 import subprocess
 
-
-
-def read_dataset(filename):
-	import h5py
-	import numpy as np
-
-	with h5py.File(filename, 'r') as ifs:
-
-		data_shape = tuple(ifs["DataSize/shape"])
-		dataset = np.zeros(data_shape, dtype=np.int16)
-		labels = np.zeros((data_shape[0],), dtype=np.int8)
-
-		for idx in range(data_shape[0]):
-			if idx % 100000 == 0:
-				print(idx, file = sys.stderr)
-			key_path = "DataSet/Instance" + str(idx) + "/"
-			dataset[idx, :] = np.array(ifs[key_path + "squiggle"], dtype=np.int16)
-			labels[idx] = np.array(ifs[key_path + "label"], dtype=np.int8)[0]
-	
-	return dataset, labels
 
 
 def main():
@@ -40,26 +21,30 @@ def main():
 
 	data = list()
 
-	dataset, labels = read_dataset("dataset.ds5")
+	dataset, labels = read_dataset("dataset.ds5", density = True)
+	dataset = dataset.reshape(dataset.shape[0], dataset.shape[1], 1)
+	labels = labels.reshape(labels.shape[0], 1)
 	instance_num = dataset.shape[0]
 	
 	n_hidden = 100
+	in_neurons = 1
 	out_neurons = 1
-	batch_size = 1024
+	batch_size = 256
 	
 	model = Sequential()
+	model.add(Masking(mask_value = 0, input_shape = (None, in_neurons)))
 	model.add(LSTM(n_hidden))
 	model.add(Dense(out_neurons))
 	model.add(Activation("sigmoid"))
 	optimizer = Adam(learning_rate = 0.001)
 	model.compile(loss = "mean_squared_error", optimizer = optimizer)
-#	print(model.summary())
+	# print(model.summary())
 
 	#sys.exit()
 	early_stopping = EarlyStopping(monitor = "val_loss", mode = "auto", patience = 20)
 	#model.fit(small_data, small_target, batch_size = batch_size, epochs = 100, validation_split = 0.1, callbacks = [early_stopping])
-	model.fit(dataset, labels, batch_size = batch_size, epochs = 100, validation_split = 0.1, callbacks = [early_stopping])
-	model.save("test_model")
+	model.fit(dataset, labels, batch_size = batch_size, epochs = 200, validation_split = 0.1, callbacks = [early_stopping])
+	model.save("test_lstm_model")
 	
 	## using train data
 	validate_size = 1000
