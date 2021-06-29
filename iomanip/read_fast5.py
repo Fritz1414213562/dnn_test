@@ -14,6 +14,6 @@ def read_fast5(fast5_names):
 
 			for seq_id in seq_ids:
 				key = seq_id.lstrip("read_")
-				retval[key] = np.array(ifs[seq_id + "/Raw/Signal"])
+				retval[key] = np.array(ifs[seq_id + "/Raw/Signal"], dtype = np.float16)
 	
 	return retval
