@@ -9,7 +9,7 @@ import math
 import subprocess
 
 
-def main(dataset_name, model_name):
+def main(dataset_name, model_name, output):
 
 	dataset, labels = read_dataset(dataset_name, density = True)
 	model = keras.models.load_model(model_name)
@@ -22,9 +22,10 @@ def main(dataset_name, model_name):
 		sys.exit()
 		
 	datanum = len(predicted)
-	print("[PREDICTED]", "[ANSWER]")
-	for idx in range(datanum):
-		print(predicted[idx], labels[idx])
+	with open(output, 'w') as ofs:
+		ofs.write("[PREDICTED]", "[ANSWER]\n")
+		for idx in range(datanum):
+			ofs.write(str(predicted[idx]) + " " +  str(labels[idx]))
 
 
 if __name__ == "__main__":
@@ -33,7 +34,8 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description = "Model prediction")
 	parser.add_argument("--dataset_path", help = "path to dataset file", required = True)
-	parser.add_argument("--model_dir", help = "path to the model dir", required = True)
+	parser.add_argument("--model_path", help = "path to the model file", required = True)
+	parser.add_argument("--output", help = "path to the output file", required = True)
 	args = parser.parse_args()
 
-	main(args.dataset_path, args.model_dir)
+	main(args.dataset_path, args.model_dir, args.output)
