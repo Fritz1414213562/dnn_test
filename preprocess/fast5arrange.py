@@ -1,5 +1,16 @@
 
 
+def median_normalization(dataset):
+
+	import numpy as np
+
+	signal_shift = np.median(dataset)
+	dataset -= signal_shift
+	signal_scale = np.median(np.abs(dataset))
+	dataset /= signal_scale
+
+
+
 def arrange_fast5(fastl_name, fast5_dirs, sqgl_unit_size, sqgl_incr_size, data_num = None):
 	
 	from iomanip import read_fast5, read_fastl, filesindirs
@@ -61,6 +72,11 @@ def main(fastl_name, fast5_dirs, output, data_num):
 	#SQGL_INCR_SIZE = int(5 * BPS2SQGLS)
 
 	squiggles, labels = arrange_fast5(fastl_name, fast5_dirs, ESTIMATE_NUCL_SQGLS, SQGL_INCR_SIZE, data_num)
+	median_normalization(squiggles)
+	label_0_num = np.sum(labels == 0)
+	print(label_0_num)
+	label_1_num = np.sum(labels == 1)
+	print(label_1_num)
 
 	if len(squiggles) != len(labels):
 		print("Something wrong !", file = sys.stderr)
