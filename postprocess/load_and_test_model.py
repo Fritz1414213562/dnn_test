@@ -23,9 +23,9 @@ def main(dataset_name, model_name, output):
 		
 	datanum = len(predicted)
 	with open(output, 'w') as ofs:
-		ofs.write("[PREDICTED]", "[ANSWER]\n")
+		ofs.write("[PREDICTED] [ANSWER]\n")
 		for idx in range(datanum):
-			ofs.write(str(predicted[idx]) + " " +  str(labels[idx]))
+			ofs.write(str(predicted[idx]) + " " +  str(labels[idx]) + "\n")
 
 
 if __name__ == "__main__":
@@ -38,4 +38,4 @@ if __name__ == "__main__":
 	parser.add_argument("--output", help = "path to the output file", required = True)
 	args = parser.parse_args()
 
-	main(args.dataset_path, args.model_dir, args.output)
+	main(args.dataset_path, args.model_path, args.output)
