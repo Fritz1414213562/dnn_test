@@ -1,35 +1,6 @@
-def read_dataset(filename):
-	import h5py
-	import numpy as np
-
-	with h5py.File(filename, 'r') as ifs:
-
-		data_shape = tuple(ifs["DataSize/shape"])
-		# dataset = np.zeros(data_shape, dtype=np.float16)
-		# labels = np.zeros((data_shape[0],), dtype=np.float16)
-		dataset = np.zeros(data_shape, dtype=np.float16)
-		labels = np.zeros((data_shape[0],), dtype=np.float16)
-
-		max_current = 0
-
-		for idx in range(data_shape[0]):
-			if idx % 100000 == 0:
-				print(idx, file = sys.stderr)
-			key_path = "DataSet/Instance" + str(idx) + "/"
-			# dataset[idx, :] = np.array(ifs[key_path + "squiggle"], dtype=np.float16)
-			# labels[idx] = np.array(ifs[key_path + "label"], dtype=np.float16)[0]
-			squiggle = np.array(ifs[key_path + "squiggle"], dtype=np.float16)
-			if (max_current < np.max(squiggle)) and (np.max(squiggle) < 4096):
-				max_current = np.max(squiggle)
-			dataset[idx, :] = squiggle
-			labels[idx] = np.array(ifs[key_path + "label"], dtype=np.float16)[0]
-
-	dataset /= max_current
-	
-	return dataset, labels
-
 def main(dataset_name, output_name, validate_size):
 
+	from iomanip import read_dataset
 	import numpy as np
 	import h5py
 
