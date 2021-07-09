@@ -25,7 +25,7 @@ def read_fastl(fastl_name, output_kind = "all"):
 			if i_line % 2 == 0:
 				words = line.split()
 				seq_id = words[0].lstrip('>')
-				label = int(words[1].lstrip("label="))
+				label = words[1].lstrip("label=")
 	
 			elif i_line % 2 == 1:
 				seq = line.rstrip('\n')

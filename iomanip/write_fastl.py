@@ -9,5 +9,5 @@ def dump_fastl(seq_dict, label_dict, output, seed = None):
 
 	with open(output, 'w') as ofs:
 		for key in seq_keys:
-			ofs.write(">" + key + " label=" + str(label_dict[key]) + "\n")
+			ofs.write(">" + key + " label=" + label_dict[key] + "\n")
 			ofs.write(seq_dict[key] + "\n")

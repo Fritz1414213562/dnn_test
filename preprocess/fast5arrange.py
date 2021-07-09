@@ -1,17 +1,87 @@
 
 
-def median_normalization(dataset):
+def median_normalization(dataset, padding):
 
 	import numpy as np
 
-	signal_shift = np.median(dataset)
-	dataset -= signal_shift
-	signal_scale = np.median(np.abs(dataset))
-	dataset /= signal_scale
+	signal_shift = np.median(dataset[dataset != padding])
+	print("Median shift:", signal_shift)
+	dataset[dataset != padding] -= signal_shift
+	signal_scale = np.median(np.abs(dataset[dataset != padding]))
+	print("MAD scale:", signal_scale)
+	dataset[dataset != padding] /= signal_scale
 
 
 
-def arrange_fast5(fastl_name, fast5_dirs, sqgl_unit_size, sqgl_incr_size, data_num = None):
+def make_squiggle_tables_one_label(squiggles, labels, keys, sqgl_unit_size, sqgl_incr_size, padding):
+
+	import numpy as np
+	import math
+
+	out_sqgls = list()
+	out_labels = list()
+
+	for key in keys:
+		squiggle_length = len(squiggles[key])
+		if squiggle_length < sqgl_unit_size:
+			squiggle = np.pad(squiggles[key], [0, sqgl_unit_size - squiggle_length], 'constant', constant_values = (padding, padding))
+			out_sqgls.append(squiggle)
+			out_labels.append(float(labels[key]))
+		else:
+			iter_num = math.ceil(int(squiggle_length - sqgl_unit_size) / sqgl_incr_size)
+			i_incr = 0
+			for i_incr in range(iter_num):
+				start_idx = sqgl_incr_size * i_incr
+				end_idx = start_idx + sqgl_unit_size
+				out_sqgls.append(squiggles[key][start_idx:end_idx])
+				out_labels.append(float(labels[key]))
+			start_idx = sqgl_incr_size * (i_incr + 1)
+			end_idx = squiggle_length
+			out_sqgls.append(np.pad(squiggles[key][start_idx:end_idx], [0, int(start_idx + sqgl_unit_size - squiggle_length)], 'constant', constant_values = (padding, padding)))
+			out_labels.append(float(labels[key]))	
+	out_sqgls = np.array(out_sqgls, dtype = np.float16)
+	out_labels = np.array(out_labels, dtype = np.float16)
+	
+	return out_sqgls, out_labels
+
+
+
+def make_squiggle_tables_two_label(squiggles, labels, keys, sqgl_unit_size, sqgl_incr_size, padding):
+
+	import numpy as np
+	import math
+
+	out_sqgls = list()
+	out_labels = list()
+
+	direction_label_dict = {"-" : 0., "+" : 1.}
+
+	for key in keys:
+		squiggle_length = len(squiggles[key])
+		if squiggle_length < sqgl_unit_size:
+			squiggle = np.pad(squiggles[key], [0, sqgl_unit_size - squiggle_length], 'constant', constant_values = (padding, padding))
+			out_sqgls.append(squiggle)
+			out_labels.append([float(labels[key][0]), direction_label_dict[labels[key][1]]])
+		else:
+			iter_num = math.ceil(int(squiggle_length - sqgl_unit_size) / sqgl_incr_size)
+			i_incr = 0
+			for i_incr in range(iter_num):
+				start_idx = sqgl_incr_size * i_incr
+				end_idx = start_idx + sqgl_unit_size
+				out_sqgls.append(squiggles[key][start_idx:end_idx])
+				out_labels.append([float(labels[key][0]), direction_label_dict[labels[key][1]]])
+			start_idx = sqgl_incr_size * (i_incr + 1)
+			end_idx = squiggle_length
+			out_sqgls.append(np.pad(squiggles[key][start_idx:end_idx], [0, int(start_idx + sqgl_unit_size - squiggle_length)], 'constant', constant_values = (padding, padding)))
+			out_labels.append([float(labels[key][0]), direction_label_dict[labels[key][1]]])
+	out_sqgls = np.array(out_sqgls, dtype = np.float16)
+	out_labels = np.array(out_labels, dtype = np.float16)
+	
+	return out_sqgls, out_labels
+
+
+
+def arrange_fast5(fastl_name, fast5_dirs, sqgl_unit_size, sqgl_incr_size, data_num, seed, padding, is_directed_label = False):
 	
 	from iomanip import read_fast5, read_fastl, filesindirs
 	import numpy as np
@@ -34,32 +104,17 @@ def arrange_fast5(fastl_name, fast5_dirs, sqgl_unit_size, sqgl_incr_size, data_n
 	if data_num == None:
 		data_num = len(keys)
 
-	for key in keys[:data_num]:
-		squiggle_length = len(squiggles[key])
-		if squiggle_length < sqgl_unit_size:
-			squiggle = np.pad(squiggles[key], [0, sqgl_unit_size - squiggle_length], 'constant')
-			out_sqgls.append(squiggle)
-			out_labels.append(labels[key])
-		else:
-			iter_num = math.ceil(int(squiggle_length - sqgl_unit_size) / sqgl_incr_size)
-			i_incr = 0
-			for i_incr in range(iter_num):
-				start_idx = sqgl_incr_size * i_incr
-				end_idx = start_idx + sqgl_unit_size
-				out_sqgls.append(squiggles[key][start_idx:end_idx])
-				out_labels.append(labels[key])
-			start_idx = sqgl_incr_size * (i_incr + 1)
-			end_idx = squiggle_length
-			out_sqgls.append(np.pad(squiggles[key][start_idx:end_idx], [0, int(start_idx + sqgl_unit_size - squiggle_length)], 'constant'))
-			out_labels.append(labels[key])	
-	out_sqgls = np.array(out_sqgls, dtype = np.float16)
-	out_labels = np.array(out_labels, dtype = np.float16)
+	np.random.seed(seed)
+	random_keys = np.random.choice(keys, size = data_num, replace = False)
 	
-	return out_sqgls, out_labels
+	if is_directed_label:
+		return make_squiggle_tables_two_label(squiggles, labels, random_keys, sqgl_unit_size, sqgl_incr_size, padding)
+	else:
+		return make_squiggle_tables_one_label(squiggles, labels, random_keys, sqgl_unit_size, sqgl_incr_size, padding)
 
 
 
-def main(fastl_name, fast5_dirs, output, data_num):
+def main(fastl_name, fast5_dirs, output, data_num, seed, is_directed_label):
 
 	import h5py
 	import sys
@@ -70,13 +125,14 @@ def main(fastl_name, fast5_dirs, output, data_num):
 	ESTIMATE_NUCL_SQGLS = int(BPS2SQGLS * NUCL_FTP_SIZE)
 	SQGL_INCR_SIZE = int(BPS2SQGLS)
 	#SQGL_INCR_SIZE = int(5 * BPS2SQGLS)
+	padding = -4096
 
-	squiggles, labels = arrange_fast5(fastl_name, fast5_dirs, ESTIMATE_NUCL_SQGLS, SQGL_INCR_SIZE, data_num)
-	median_normalization(squiggles)
-	label_0_num = np.sum(labels == 0)
-	print(label_0_num)
-	label_1_num = np.sum(labels == 1)
-	print(label_1_num)
+	squiggles, labels = arrange_fast5(fastl_name, fast5_dirs, ESTIMATE_NUCL_SQGLS, SQGL_INCR_SIZE, data_num, seed, padding, is_directed_label)
+	median_normalization(squiggles, padding)
+#	label_0_num = np.sum(labels == 0)
+#	print("The number of label '0'", label_0_num)
+#	label_1_num = np.sum(labels == 1)
+#	print("The number off label '1'", label_1_num)
 
 	if len(squiggles) != len(labels):
 		print("Something wrong !", file = sys.stderr)
@@ -91,7 +147,13 @@ def main(fastl_name, fast5_dirs, output, data_num):
 		for i_instance in range(len(squiggles)):
 			subgrp = grp2.create_group("Instance" + str(i_instance))
 			subgrp.create_dataset("squiggle", data = squiggles[i_instance])
-			subgrp.create_dataset("label", data = np.array([labels[i_instance]]))
+			if isinstance(labels[i_instance], np.float16):
+				subgrp.create_dataset("label", data = np.array([labels[i_instance]]))
+			elif isinstance(labels[i_instance], np.ndarray):
+				subgrp.create_dataset("label", data = labels[i_instance])
+			else:
+				print("The label format is strange!", file = sys.stderr)
+				sys.exit()
 
 
 if __name__ == "__main__":
@@ -104,12 +166,20 @@ if __name__ == "__main__":
 	parser.add_argument("--fast5_dir", help = "path to fast5 directory", nargs = '*', required = True)
 	parser.add_argument("--output", help = "path to the output file (recommended: .ds5)", required = True)
 	parser.add_argument("--datanum", help = "the data number for use (training, test)", default = None)
+	parser.add_argument("--direct", action = "store_true")
+	parser.add_argument("--seed", help = "seed number for random choice")
 	args = parser.parse_args()
 
 	data_num = None
+	seed_num = 0
 	if args.datanum == None:
 		pass
 	else:
 		data_num = int(args.datanum)
+	
+	if args.seed == None:
+		pass
+	else:
+		seed_num = int(args.seed)
 
-	main(args.fastl_file, args.fast5_dir, args.output, data_num)
+	main(args.fastl_file, args.fast5_dir, args.output, data_num, seed_num, args.direct)
