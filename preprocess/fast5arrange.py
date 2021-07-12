@@ -12,6 +12,17 @@ def median_normalization(dataset, padding):
 	dataset[dataset != padding] /= signal_scale
 
 
+def standard_normalization(dataset, padding):
+
+	import numpy as np
+
+	signal_shift = np.mean(dataset[dataset != padding])
+	print("Mean shift:", signal_shift)
+	dataset[dataset != padding] -= signal_shift
+	signal_scale = np.std(dataset[dataset != padding], dtype = np.float32)
+	print("Std scale:", signal_scale)
+	dataset[dataset != padding] /= signal_scale
+
 
 def make_squiggle_tables_one_label(squiggles, labels, keys, sqgl_unit_size, sqgl_incr_size, padding):
 
@@ -96,6 +107,8 @@ def arrange_fast5(fastl_name, fast5_dirs, sqgl_unit_size, sqgl_incr_size, data_n
 	print("Squiggles from fast5:", len(squiggles))
 
 	keys = list(set(labels.keys()) & set(squiggles.keys()))
+	label0_keys = np.array([key for key in keys if labels[key][0] == "0"])
+	label1_keys = np.array([key for key in keys if labels[key][0] == "1"])
 	print("Overlapped:", len(keys))
 
 	out_sqgls = list()
@@ -105,7 +118,11 @@ def arrange_fast5(fastl_name, fast5_dirs, sqgl_unit_size, sqgl_incr_size, data_n
 		data_num = len(keys)
 
 	np.random.seed(seed)
-	random_keys = np.random.choice(keys, size = data_num, replace = False)
+	rng = np.random.default_rng()
+	random_keys0 = np.random.choice(label0_keys, size = data_num, replace = False)
+	random_keys1 = np.random.choice(label1_keys, size = data_num, replace = False)
+	random_keys = np.concatenate([random_keys0, random_keys1])
+	rng.shuffle(random_keys)
 	
 	if is_directed_label:
 		return make_squiggle_tables_two_label(squiggles, labels, random_keys, sqgl_unit_size, sqgl_incr_size, padding)
@@ -128,7 +145,9 @@ def main(fastl_name, fast5_dirs, output, data_num, seed, is_directed_label):
 	padding = -4096
 
 	squiggles, labels = arrange_fast5(fastl_name, fast5_dirs, ESTIMATE_NUCL_SQGLS, SQGL_INCR_SIZE, data_num, seed, padding, is_directed_label)
-	median_normalization(squiggles, padding)
+#	median_normalization(squiggles, padding)
+	standard_normalization(squiggles, padding)
+	print(labels.shape)
 #	label_0_num = np.sum(labels == 0)
 #	print("The number of label '0'", label_0_num)
 #	label_1_num = np.sum(labels == 1)
