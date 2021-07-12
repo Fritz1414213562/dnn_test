@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
-from iomanip import read_dataset
+from iomanip import read_two_label_dataset
 from util import util_decimal
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,11 +11,10 @@ import subprocess
 
 def main(dataset_name, model_name, output):
 
-	dataset, labels = read_dataset(dataset_name, density = True)
+	dataset, labels = read_two_label_dataset(dataset_name, density = False)
 	model = keras.models.load_model(model_name)
 	# prediction
 	predicted = model.predict(dataset)
-	predicted = predicted.reshape((len(predicted),))
 	predicted = util_decimal(predicted).astype(int)
 	if len(predicted) != len(labels):
 		print("The size of dataset is not consistent with that of labels")
@@ -25,7 +24,8 @@ def main(dataset_name, model_name, output):
 	with open(output, 'w') as ofs:
 		ofs.write("[PREDICTED] [ANSWER]\n")
 		for idx in range(datanum):
-			ofs.write(str(predicted[idx]) + " " +  str(labels[idx]) + "\n")
+			#ofs.write(str(predicted[idx]) + " " +  str(labels[idx]) + "\n")
+			ofs.write(str(predicted[idx, 0]) + " " + str(predicted[idx, 1]) + " " + str(labels[idx, 0]) + " " + str(labels[idx, 1]) + "\n")
 
 
 if __name__ == "__main__":
