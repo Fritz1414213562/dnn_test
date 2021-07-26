@@ -69,7 +69,7 @@ def main(input_log, output):
 
 		sensitivity_0 = calculate_sensitivity(true_false_mat, 0)
 		sensitivity_1 = calculate_sensitivity(true_false_mat, 1)
-		ofs.write("\n[Prediction Sensitivity\n]")
+		ofs.write("\n[Prediction Sensitivity]\n")
 		ofs.write("label_0: {0:10f}\n".format(sensitivity_0))
 		ofs.write("label_1: {0:10f}\n".format(sensitivity_1))
 
