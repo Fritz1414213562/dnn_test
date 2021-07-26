@@ -1,15 +1,17 @@
 def main(dataset_name, output_name, validate_size):
 
-	from iomanip import read_dataset
+	from iomanip import read_two_label_dataset
 	import numpy as np
 	import h5py
 
-	dataset, labels = read_dataset(dataset_name)
+	dataset, labels = read_two_label_dataset(dataset_name)
 	instance_num = dataset.shape[0]
 
 	rand_indices = np.random.randint(0, instance_num, (validate_size, ))
 	validate = dataset[rand_indices, :]
-	answer = labels[rand_indices]
+	answer = labels[rand_indices, :]
+#	print(np.sum(answer == 0))
+#	print(np.sum(answer == 1))
 
 	with h5py.File(output_name, 'w') as ofs:
 		grp1 = ofs.create_group("DataSize")
